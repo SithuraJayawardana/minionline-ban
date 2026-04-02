@@ -55,6 +55,17 @@ public class LoginFrame extends JFrame {
         hintLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridy = 4;
         add(hintLabel, gbc);
+
+        JButton signUpButton = new JButton("Don't have an account? Sign Up");
+        signUpButton.setBackground(ThemeUtil.COLOR_BROWN);
+        signUpButton.setForeground(Color.WHITE);
+        signUpButton.setFocusPainted(false);
+        signUpButton.addActionListener(e -> {
+            new SignUpFrame(userDAO).setVisible(true);
+            dispose();
+        });
+        gbc.gridy = 5;
+        add(signUpButton, gbc);
     }
 
     private void handleLogin(ActionEvent e) {

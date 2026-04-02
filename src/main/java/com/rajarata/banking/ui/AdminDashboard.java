@@ -2,7 +2,10 @@ package com.rajarata.banking.ui;
 
 import com.rajarata.banking.db.TransactionDAO;
 import com.rajarata.banking.db.UserDAO;
+import com.rajarata.banking.db.AccountDAO;
 import com.rajarata.banking.domain.users.*;
+import com.rajarata.banking.domain.services.SystemScheduler;
+import com.rajarata.banking.domain.accounts.BankAccount;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,11 +24,15 @@ public class AdminDashboard extends JFrame {
     private DefaultTableModel userTableModel;
     private DefaultTableModel txTableModel;
     private JTextArea auditLogArea;
+    private SystemScheduler systemScheduler;
+    private AccountDAO accountDAO;
 
     public AdminDashboard(Administrator admin, UserDAO userDAO) {
         this.admin          = admin;
         this.userDAO        = userDAO;
         this.transactionDAO = new TransactionDAO();
+        this.accountDAO     = new AccountDAO();
+        this.systemScheduler = new SystemScheduler();
 
         setTitle("Administrator Dashboard — " + admin.getName());
         setSize(950, 700);
@@ -39,6 +46,7 @@ public class AdminDashboard extends JFrame {
         tabbedPane.addTab("👥 User Management",     createUserPanel());
         tabbedPane.addTab("📊 Transaction Overview", createTransactionPanel());
         tabbedPane.addTab("🔒 System Audit Logs",    createAuditLogPanel());
+        tabbedPane.addTab("⚙️ System Operations",   createSystemOperationsPanel());
 
         add(tabbedPane);
         refreshUserTable();
@@ -209,6 +217,41 @@ public class AdminDashboard extends JFrame {
 
         // Load initial content
         refreshAuditLog();
+        return panel;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  SYSTEM OPERATIONS
+    // ─────────────────────────────────────────────────────────────────
+    private JPanel createSystemOperationsPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        panel.setBackground(ThemeUtil.COLOR_BG_PANEL);
+
+        JButton endOfMonthBtn = new JButton("Run End of Month Processing");
+        ThemeUtil.styleButton(endOfMonthBtn);
+        endOfMonthBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                "Run EOM processing? (Applies interest/penalties to all accounts)", 
+                "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    List<BankAccount> allAccounts = accountDAO.getAllAccounts();
+                    systemScheduler.processEndOfMonth(allAccounts);
+                    for (BankAccount acc : allAccounts) {
+                        accountDAO.updateBalance(acc.getAccountNumber(), acc.getBalance());
+                        for (com.rajarata.banking.domain.transactions.Transaction tx : acc.getTransactionHistory()) {
+                            transactionDAO.saveTransaction(acc.getAccountNumber(), tx);
+                        }
+                    }
+                    JOptionPane.showMessageDialog(this, "EOM completed on " + allAccounts.size() + " accounts.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    refreshTransactionTable();
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error during EOM: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        panel.add(endOfMonthBtn);
+
         return panel;
     }
 

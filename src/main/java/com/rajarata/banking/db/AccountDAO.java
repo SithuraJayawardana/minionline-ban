@@ -83,4 +83,28 @@ public class AccountDAO {
         }
         return null;
     }
+
+    public List<BankAccount> getAllAccounts() {
+        List<BankAccount> accounts = new ArrayList<>();
+        String query = "SELECT * FROM accounts";
+        try (Connection conn = DatabaseManager.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                String accNum = rs.getString("account_number");
+                double bal = rs.getDouble("balance");
+                String type = rs.getString("account_type");
+                String userId = rs.getString("user_id");
+                
+                Customer dummyOwner = new Customer(userId, "Dummy Owner", "", "", "", java.time.LocalDate.now());
+                
+                if ("CHECKING".equalsIgnoreCase(type)) {
+                    accounts.add(new CheckingAccount(accNum, dummyOwner, bal, 5000.0));
+                } else {
+                    accounts.add(new SavingsAccount(accNum, dummyOwner, bal));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching all accounts: " + e.getMessage());
+        }
+        return accounts;
+    }
 }
