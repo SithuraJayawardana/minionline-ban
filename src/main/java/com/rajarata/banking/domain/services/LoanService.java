@@ -18,6 +18,7 @@ public class LoanService {
     public Loan applyForLoan(com.rajarata.banking.domain.users.Customer borrower, double amount, int termInMonths, LoanType type) {
         Loan loan = new Loan(borrower, amount, termInMonths, type);
         loan.setInterestRate(getInterestRate(type));
+        com.rajarata.banking.db.FileStorageUtil.saveLoan(borrower.getUserId(), amount, termInMonths, type.name());
         return loan;
     }
 

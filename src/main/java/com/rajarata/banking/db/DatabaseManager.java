@@ -33,10 +33,16 @@ public class DatabaseManager {
                     "account_number TEXT PRIMARY KEY, " +
                     "user_id TEXT NOT NULL, " +
                     "balance REAL NOT NULL, " +
+                    "currency TEXT DEFAULT 'LKR', " +
                     "account_type TEXT NOT NULL, " +
                     "FOREIGN KEY (user_id) REFERENCES users(user_id)" +
                     ");";
             stmt.execute(createAccountsSql);
+            try {
+                stmt.execute("ALTER TABLE accounts ADD COLUMN currency TEXT DEFAULT 'LKR'");
+            } catch (SQLException ignore) {}
+
+
 
             // Create Transactions Table for persistent transaction history
             String createTransactionsSql = "CREATE TABLE IF NOT EXISTS transactions (" +

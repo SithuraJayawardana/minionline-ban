@@ -10,7 +10,7 @@ import java.util.List;
 public class AccountDAO {
     
     public void createAccount(BankAccount account) {
-        String query = "INSERT INTO accounts (account_number, user_id, balance, account_type) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO accounts (account_number, user_id, balance, account_type, currency) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, account.getAccountNumber());
             pstmt.setString(2, account.getOwner().getUserId());
@@ -18,6 +18,7 @@ public class AccountDAO {
             String type = "SAVINGS"; 
             if (account instanceof CheckingAccount) type = "CHECKING";
             pstmt.setString(4, type);
+            pstmt.setString(5, account.getCurrency());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Error creating account: " + e.getMessage());
@@ -44,12 +45,16 @@ public class AccountDAO {
                     String accNum = rs.getString("account_number");
                     double bal = rs.getDouble("balance");
                     String type = rs.getString("account_type");
+                    String curr = rs.getString("currency");
                     
+                    BankAccount acc;
                     if ("CHECKING".equalsIgnoreCase(type)) {
-                        accounts.add(new CheckingAccount(accNum, owner, bal, 5000.0));
+                        acc = new CheckingAccount(accNum, owner, bal, 5000.0);
                     } else {
-                        accounts.add(new SavingsAccount(accNum, owner, bal));
+                        acc = new SavingsAccount(accNum, owner, bal);
                     }
+                    if (curr != null) acc.setCurrency(curr);
+                    accounts.add(acc);
                 }
             }
         } catch (SQLException e) {
@@ -68,14 +73,18 @@ public class AccountDAO {
                     double bal = rs.getDouble("balance");
                     String type = rs.getString("account_type");
                     String userId = rs.getString("user_id");
+                    String curr = rs.getString("currency");
                     
                     Customer dummyOwner = new Customer(userId, "Target User", "", "", "", java.time.LocalDate.now());
                     
+                    BankAccount acc;
                     if ("CHECKING".equalsIgnoreCase(type)) {
-                        return new CheckingAccount(accNum, dummyOwner, bal, 5000.0);
+                        acc = new CheckingAccount(accNum, dummyOwner, bal, 5000.0);
                     } else {
-                        return new SavingsAccount(accNum, dummyOwner, bal);
+                        acc = new SavingsAccount(accNum, dummyOwner, bal);
                     }
+                    if (curr != null) acc.setCurrency(curr);
+                    return acc;
                 }
             }
         } catch (SQLException e) {
@@ -93,14 +102,18 @@ public class AccountDAO {
                 double bal = rs.getDouble("balance");
                 String type = rs.getString("account_type");
                 String userId = rs.getString("user_id");
+                String curr = rs.getString("currency");
                 
                 Customer dummyOwner = new Customer(userId, "Dummy Owner", "", "", "", java.time.LocalDate.now());
                 
+                BankAccount acc;
                 if ("CHECKING".equalsIgnoreCase(type)) {
-                    accounts.add(new CheckingAccount(accNum, dummyOwner, bal, 5000.0));
+                    acc = new CheckingAccount(accNum, dummyOwner, bal, 5000.0);
                 } else {
-                    accounts.add(new SavingsAccount(accNum, dummyOwner, bal));
+                    acc = new SavingsAccount(accNum, dummyOwner, bal);
                 }
+                if (curr != null) acc.setCurrency(curr);
+                accounts.add(acc);
             }
         } catch (SQLException e) {
             System.err.println("Error fetching all accounts: " + e.getMessage());

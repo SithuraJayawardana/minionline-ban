@@ -88,7 +88,7 @@ public class CustomerDashboard extends JFrame {
         welcome.setBorder(new EmptyBorder(15, 10, 15, 10));
         panel.add(welcome, BorderLayout.NORTH);
 
-        String[] cols = {"Account Number", "Type", "Balance (LKR)"};
+        String[] cols = {"Account Number", "Type", "Balance"};
         accountTableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -107,25 +107,63 @@ public class CustomerDashboard extends JFrame {
         JButton openAccountBtn = new JButton("➕ Open New Account");
         ThemeUtil.styleButton(openAccountBtn);
         openAccountBtn.addActionListener(e -> {
-            String[] options = {"Savings Account", "Checking Account"};
-            int choice = JOptionPane.showOptionDialog(this, "Select the type of account to open:", "Open New Bank Account",
-                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+            JPanel optionsPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+            optionsPanel.add(new JLabel("Account Type:"));
+            JComboBox<String> typeBox = new JComboBox<>(new String[]{"Savings Account", "Checking Account"});
+            optionsPanel.add(typeBox);
+            optionsPanel.add(new JLabel("Currency:"));
+            JComboBox<String> currBox = new JComboBox<>(new String[]{"LKR", "USD", "EUR"});
+            optionsPanel.add(currBox);
+
+            int choice = JOptionPane.showConfirmDialog(this, optionsPanel, "Open New Bank Account",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
             
-            if (choice >= 0) {
-                String prefix = choice == 0 ? "SAV-" : "CHK-";
+            if (choice == JOptionPane.OK_OPTION) {
+                int typeChoice = typeBox.getSelectedIndex();
+                String curr = (String) currBox.getSelectedItem();
+                String prefix = typeChoice == 0 ? "SAV-" : "CHK-";
                 String accNum = prefix + java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
                 com.rajarata.banking.domain.accounts.BankAccount newAcc;
-                if (choice == 0) {
+                if (typeChoice == 0) {
                     newAcc = new com.rajarata.banking.domain.accounts.SavingsAccount(accNum, customer, 0.0);
                 } else {
                     newAcc = new com.rajarata.banking.domain.accounts.CheckingAccount(accNum, customer, 0.0, 5000.0);
                 }
+                newAcc.setCurrency(curr);
                 accountDAO.createAccount(newAcc);
-                JOptionPane.showMessageDialog(this, "Successfully opened new " + options[choice] + ":\n" + accNum, "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Successfully opened new " + typeBox.getSelectedItem() + " (" + curr + "):\n" + accNum, "Success", JOptionPane.INFORMATION_MESSAGE);
                 refreshAccounts();
             }
         });
         bottom.add(openAccountBtn);
+
+        JButton simBtn = new JButton("📈 Interest Simulator");
+        ThemeUtil.styleButton(simBtn);
+        simBtn.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Please select an account from the table first.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            String accNum = (String) table.getValueAt(row, 0);
+            BankAccount targetAcc = accountDAO.getAccountByNumber(accNum);
+            
+            String input = JOptionPane.showInputDialog(this, "Enter duration (months) to simulate forward:");
+            if (input != null && !input.trim().isEmpty()) {
+                try {
+                    int duration = Integer.parseInt(input.trim());
+                    double simulated = com.rajarata.banking.domain.services.InterestSimulationEngine.simulateFutureBalance(targetAcc, duration);
+                    JOptionPane.showMessageDialog(this, 
+                        "Current Balance: " + String.format("%.2f %s", targetAcc.getBalance(), targetAcc.getCurrency()) +
+                        "\nSimulated Balance after " + duration + " months: " + 
+                        String.format("%.2f %s", simulated, targetAcc.getCurrency()),
+                        "Simulation Forecast", JOptionPane.INFORMATION_MESSAGE);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Invalid number of months.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        bottom.add(simBtn);
 
         panel.add(bottom, BorderLayout.SOUTH);
 
@@ -155,7 +193,7 @@ public class CustomerDashboard extends JFrame {
 
         // Row 1 — amount
         gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
-        txPanel.add(makeLabel("Amount (LKR):"), gbc);
+        txPanel.add(makeLabel("Amount:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1;
         txPanel.add(amountField, gbc);
 
@@ -198,7 +236,7 @@ public class CustomerDashboard extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(ThemeUtil.COLOR_BG_PANEL);
 
-        String[] cols = {"Transaction ID", "Account", "Type", "Amount (LKR)", "Status", "Timestamp"};
+        String[] cols = {"Transaction ID", "Account", "Type", "Amount", "Status", "Timestamp"};
         txTableModel = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -451,7 +489,7 @@ public class CustomerDashboard extends JFrame {
         List<BankAccount> accounts = accountDAO.getAccountsForCustomer(customer);
         for (BankAccount acc : accounts) {
             String type = acc instanceof com.rajarata.banking.domain.accounts.CheckingAccount ? "Checking" : "Savings";
-            accountTableModel.addRow(new Object[]{acc.getAccountNumber(), type, String.format("%.2f", acc.getBalance())});
+            accountTableModel.addRow(new Object[]{acc.getAccountNumber(), type, String.format("%.2f %s", acc.getBalance(), acc.getCurrency())});
             if (accountSelector != null) accountSelector.addItem(acc.getAccountNumber());
         }
         refreshHistory();
@@ -469,7 +507,7 @@ public class CustomerDashboard extends JFrame {
                     tx.getTransactionId(),
                     acc.getAccountNumber() + " (" + accType + ")",
                     tx.getType().name(),
-                    String.format("%.2f", tx.getAmount()),
+                    String.format("%.2f %s", tx.getAmount(), acc.getCurrency()),
                     tx.getStatus().name(),
                     tx.getTimestamp().toString().replace("T", " ")
                 });

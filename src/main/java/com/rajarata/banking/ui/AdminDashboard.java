@@ -47,6 +47,7 @@ public class AdminDashboard extends JFrame {
         tabbedPane.addTab("📊 Transaction Overview", createTransactionPanel());
         tabbedPane.addTab("🔒 System Audit Logs",    createAuditLogPanel());
         tabbedPane.addTab("⚙️ System Operations",   createSystemOperationsPanel());
+        tabbedPane.addTab("📑 Business Reports",    createBusinessReportsPanel());
 
         add(tabbedPane);
         refreshUserTable();
@@ -251,6 +252,77 @@ public class AdminDashboard extends JFrame {
             }
         });
         panel.add(endOfMonthBtn);
+
+        return panel;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  BUSINESS REPORTS
+    // ─────────────────────────────────────────────────────────────────
+    private JPanel createBusinessReportsPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(ThemeUtil.COLOR_BG_PANEL);
+
+        JLabel header = new JLabel("Aggregated Business Reports", SwingConstants.CENTER);
+        header.setFont(ThemeUtil.HEADER_FONT);
+        header.setForeground(ThemeUtil.COLOR_YELLOW);
+        header.setBorder(new EmptyBorder(12, 10, 12, 10));
+        panel.add(header, BorderLayout.NORTH);
+
+        JTextArea reportArea = new JTextArea();
+        reportArea.setEditable(false);
+        reportArea.setFont(new Font("Consolas", Font.PLAIN, 13));
+        reportArea.setBackground(new Color(250, 250, 250));
+        panel.add(new JScrollPane(reportArea), BorderLayout.CENTER);
+
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        bottom.setBackground(ThemeUtil.COLOR_BG_PANEL);
+
+        JButton genBtn = new JButton("Generate Comprehensive Report");
+        ThemeUtil.styleButton(genBtn);
+        genBtn.addActionListener(e -> {
+            StringBuilder sb = new StringBuilder();
+            sb.append("=== SYSTEM PERFORMANCE REPORT ===\n\n");
+            
+            // 1. Customer Activity from DB
+            sb.append("[1] CUSTOMER & ACCOUNT ACTIVITY (SQLite DB)\n");
+            int totalUsers = userDAO.getAllUsers().size();
+            sb.append("Total Registered Users: ").append(totalUsers).append("\n");
+            
+            List<BankAccount> allAccounts = accountDAO.getAllAccounts();
+            double totalLiquidity = 0;
+            for (BankAccount acc : allAccounts) {
+                totalLiquidity += acc.getBalance();
+            }
+            sb.append("Total Open Accounts: ").append(allAccounts.size()).append("\n");
+            sb.append("Total Bank Liquidity: ").append(String.format("%.2f", totalLiquidity)).append("\n\n");
+            
+            // 2. Transaction Summaries
+            sb.append("[2] TRANSACTION SUMMARIES (SQLite DB)\n");
+            List<Object[]> allTx = transactionDAO.getAllTransactionRows();
+            sb.append("Total Processed Transactions: ").append(allTx.size()).append("\n\n");
+            
+            // 3. Raw File Handling metrics (Loans)
+            sb.append("[3] LOAN PERFORMANCE (Raw txt file: loans_db.txt)\n");
+            List<String> rawLoans = com.rajarata.banking.db.FileStorageUtil.readAllLoans();
+            sb.append("Total Disbursed Loans: ").append(rawLoans.size()).append("\n");
+            double totalLoanAmount = 0;
+            for (String loanLine : rawLoans) {
+                try {
+                    String[] parts = loanLine.split(",");
+                    if (parts.length >= 2) {
+                        totalLoanAmount += Double.parseDouble(parts[1]);
+                    }
+                } catch (Exception ignore) {}
+            }
+            sb.append("Total Loan Principal Issued: ").append(String.format("%.2f", totalLoanAmount)).append("\n\n");
+            
+            sb.append("=================================");
+            reportArea.setText(sb.toString());
+        });
+        
+        bottom.add(genBtn);
+        panel.add(bottom, BorderLayout.SOUTH);
 
         return panel;
     }

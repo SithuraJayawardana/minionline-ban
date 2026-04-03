@@ -72,11 +72,17 @@ public class LoginFrame extends JFrame {
         String email = emailField.getText();
         String pwd = new String(passwordField.getPassword());
         
+        if (userDAO.isLocked(email)) {
+            JOptionPane.showMessageDialog(this, "Account locked due to multiple failed login attempts. Contact an administrator.", "Account Locked", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         // Simple hash check mocking
         String hashed = java.util.Base64.getEncoder().encodeToString(pwd.getBytes());
         User user = userDAO.authenticate(email, hashed);
 
         if (user != null) {
+            userDAO.resetFailedAttempts(email);
             JOptionPane.showMessageDialog(this, "Welcome " + user.getName() + "!", "Login Success", JOptionPane.INFORMATION_MESSAGE);
             // Route user window dynamically
             if (user instanceof Administrator) {
@@ -86,7 +92,15 @@ public class LoginFrame extends JFrame {
             }
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this, "Invalid credentials.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+            userDAO.incrementFailedAttempts(email);
+            int attempts = userDAO.getFailedAttempts(email);
+            if (attempts >= 3) {
+                userDAO.lockUser(email);
+                new com.rajarata.banking.domain.security.AuditLogger().logEvent("FRAUD_ALERT", "Brute force login detected and account locked for email: " + email);
+                JOptionPane.showMessageDialog(this, "Account locked due to 3 failed attempts.", "Security Alert", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Invalid credentials. Attempt " + attempts + " of 3.", "Login Failed", JOptionPane.WARNING_MESSAGE);
+            }
         }
     }
 }

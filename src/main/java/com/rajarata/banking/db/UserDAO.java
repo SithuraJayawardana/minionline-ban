@@ -67,6 +67,58 @@ public class UserDAO {
         return null;
     }
 
+    public void incrementFailedAttempts(String email) {
+        String query = "UPDATE users SET failed_attempts = failed_attempts + 1 WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error incrementing: " + e.getMessage());
+        }
+    }
+
+    public void lockUser(String email) {
+        String query = "UPDATE users SET is_locked = 1 WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error locking: " + e.getMessage());
+        }
+    }
+
+    public void resetFailedAttempts(String email) {
+        String query = "UPDATE users SET failed_attempts = 0 WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error resetting: " + e.getMessage());
+        }
+    }
+
+    public int getFailedAttempts(String email) {
+        String query = "SELECT failed_attempts FROM users WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("failed_attempts");
+            }
+        } catch (SQLException e) {}
+        return 0;
+    }
+
+    public boolean isLocked(String email) {
+        String query = "SELECT is_locked FROM users WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getBoolean("is_locked");
+            }
+        } catch (SQLException e) {}
+        return false;
+    }
+
     public List<User> getAllUsers() {
         List<User> list = new ArrayList<>();
         String query = "SELECT * FROM users";
