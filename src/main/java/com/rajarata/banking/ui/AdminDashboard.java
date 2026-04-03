@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class AdminDashboard extends JFrame {
-    private Administrator admin;
     private UserDAO userDAO;
     private TransactionDAO transactionDAO;
     private DefaultTableModel userTableModel;
@@ -28,7 +27,6 @@ public class AdminDashboard extends JFrame {
     private AccountDAO accountDAO;
 
     public AdminDashboard(Administrator admin, UserDAO userDAO) {
-        this.admin          = admin;
         this.userDAO        = userDAO;
         this.transactionDAO = new TransactionDAO();
         this.accountDAO     = new AccountDAO();
