@@ -492,6 +492,14 @@ public class CustomerDashboard extends JFrame {
             accountTableModel.addRow(new Object[]{acc.getAccountNumber(), type, String.format("%.2f %s", acc.getBalance(), acc.getCurrency())});
             if (accountSelector != null) accountSelector.addItem(acc.getAccountNumber());
         }
+        
+        List<Loan> loans = loanService.getLoansForCustomer(customer);
+        for (int i = 0; i < loans.size(); i++) {
+            Loan loan = loans.get(i);
+            String loanRef = "LOAN-" + loan.getLoanId().split("-")[0].toUpperCase();
+            accountTableModel.addRow(new Object[]{loanRef, "Loan - " + loan.getType().name(), String.format("-%.2f LKR", loan.getPrincipalAmount())});
+        }
+        
         refreshHistory();
     }
 

@@ -7,9 +7,9 @@ import java.util.List;
 public class FileStorageUtil {
     private static final String LOANS_FILE = "loans_db.txt";
 
-    public static void saveLoan(String customerId, double amount, int termMonths, String type) {
+    public static void saveLoan(String loanId, String customerId, double amount, int termMonths, String type) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(LOANS_FILE, true))) {
-            writer.println(customerId + "," + amount + "," + termMonths + "," + type + "," + java.time.LocalDate.now());
+            writer.println(loanId + "," + customerId + "," + amount + "," + termMonths + "," + type + "," + java.time.LocalDate.now());
         } catch (IOException e) {
             System.err.println("Error saving loan to file: " + e.getMessage());
         }

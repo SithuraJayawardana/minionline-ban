@@ -18,7 +18,7 @@ public class LoanService {
     public Loan applyForLoan(com.rajarata.banking.domain.users.Customer borrower, double amount, int termInMonths, LoanType type) {
         Loan loan = new Loan(borrower, amount, termInMonths, type);
         loan.setInterestRate(getInterestRate(type));
-        com.rajarata.banking.db.FileStorageUtil.saveLoan(borrower.getUserId(), amount, termInMonths, type.name());
+        com.rajarata.banking.db.FileStorageUtil.saveLoan(loan.getLoanId(), borrower.getUserId(), amount, termInMonths, type.name());
         return loan;
     }
 
@@ -42,5 +42,39 @@ public class LoanService {
         // Flat rate 500 LKR late penalty or 2% of remaining balance
         double penalty = 500.0;
         loan.setRemainingBalance(loan.getRemainingBalance() + penalty);
+    }
+
+    public java.util.List<Loan> getLoansForCustomer(com.rajarata.banking.domain.users.Customer customer) {
+        java.util.List<Loan> customerLoans = new java.util.ArrayList<>();
+        java.util.List<String> allLoansLines = com.rajarata.banking.db.FileStorageUtil.readAllLoans();
+        for (String line : allLoansLines) {
+            String[] parts = line.split(",");
+            if (parts.length >= 6) {
+                // New format: loanId, customerId, amount, term, type, date
+                String loanId = parts[0];
+                String customerId = parts[1];
+                if (customerId.equals(customer.getUserId())) {
+                    double amount = Double.parseDouble(parts[2]);
+                    int term = Integer.parseInt(parts[3]);
+                    LoanType type = LoanType.valueOf(parts[4]);
+                    Loan loan = new Loan(customer, amount, term, type);
+                    loan.setLoanId(loanId);
+                    loan.setInterestRate(getInterestRate(type));
+                    customerLoans.add(loan);
+                }
+            } else if (parts.length == 5) {
+                // Old format: customerId, amount, term, type, date
+                String customerId = parts[0];
+                if (customerId.equals(customer.getUserId())) {
+                    double amount = Double.parseDouble(parts[1]);
+                    int term = Integer.parseInt(parts[2]);
+                    LoanType type = LoanType.valueOf(parts[3]);
+                    Loan loan = new Loan(customer, amount, term, type);
+                    loan.setInterestRate(getInterestRate(type));
+                    customerLoans.add(loan);
+                }
+            }
+        }
+        return customerLoans;
     }
 }
