@@ -40,6 +40,7 @@ public class CustomerDashboard extends JFrame {
     private DefaultTableModel accountTableModel;
     private DefaultTableModel txTableModel;
     private JComboBox<String> accountSelector;
+    private JPanel statsPanel;  // Store reference to stats panel for refreshing
 
     public CustomerDashboard(Customer customer) {
         this.customer = customer;
@@ -229,18 +230,35 @@ public class CustomerDashboard extends JFrame {
 
     /**
      * Creates the statistics section with 3 stat cards
-     * Uses consistent spacing and card design
+     * Dynamically calculates total accounts, balance, and transaction count
      */
     private JPanel createStatsSection() {
-        JPanel section = new JPanel(new GridLayout(1, 3, 20, 0));
-        section.setBackground(ThemeUtil.COLOR_BACKGROUND);
-        section.setBorder(new EmptyBorder(0, 0, 32, 0));
+        statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
+        statsPanel.setBackground(ThemeUtil.COLOR_BACKGROUND);
+        statsPanel.setBorder(new EmptyBorder(0, 0, 32, 0));
 
-        section.add(createStatCard("Total Accounts", "0", ThemeUtil.COLOR_PRIMARY));
-        section.add(createStatCard("Total Balance", "LKR 0.00", ThemeUtil.COLOR_ACCENT));
-        section.add(createStatCard("Transactions", "0", ThemeUtil.COLOR_SUCCESS));
+        // Calculate statistics from database
+        List<BankAccount> accounts = accountDAO.getAccountsForCustomer(customer);
+        int totalAccounts = accounts != null ? accounts.size() : 0;
+        
+        double totalBalance = 0.0;
+        int totalTransactions = 0;
+        if (accounts != null) {
+            for (BankAccount acc : accounts) {
+                totalBalance += acc.getBalance();
+                List<Transaction> txList = transactionDAO.getTransactionsForAccount(acc.getAccountNumber());
+                if (txList != null) {
+                    totalTransactions += txList.size();
+                }
+            }
+        }
 
-        return section;
+        // Create stat cards with calculated values
+        statsPanel.add(createStatCard("Total Accounts", String.valueOf(totalAccounts), ThemeUtil.COLOR_PRIMARY));
+        statsPanel.add(createStatCard("Total Balance", String.format("LKR %.2f", totalBalance), ThemeUtil.COLOR_ACCENT));
+        statsPanel.add(createStatCard("Transactions", String.valueOf(totalTransactions), ThemeUtil.COLOR_SUCCESS));
+
+        return statsPanel;
     }
 
     /**
@@ -392,7 +410,9 @@ public class CustomerDashboard extends JFrame {
         buttonPanel.setBackground(ThemeUtil.COLOR_BACKGROUND);
         JButton refreshBtn = new JButton("🔄 Refresh");
         styleButton(refreshBtn);
-        refreshBtn.addActionListener(e -> refreshHistory());
+        refreshBtn.addActionListener(e -> {
+            refreshAccounts();  // Refresh both accounts AND history
+        });
         buttonPanel.add(refreshBtn);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -1368,8 +1388,7 @@ public class CustomerDashboard extends JFrame {
                     break;
             }
             clearField.setText("");
-            refreshAccounts();
-            refreshHistory();
+            refreshAccounts();  // This now calls refreshStats() and refreshHistory() internally
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Please enter a valid amount", "Error", JOptionPane.ERROR_MESSAGE);
         } catch (Exception ex) {
@@ -1378,37 +1397,95 @@ public class CustomerDashboard extends JFrame {
     }
 
     private void refreshAccounts() {
+        // Clear and rebuild the account table from database
         accountTableModel.setRowCount(0);
-        if (accountSelector != null) accountSelector.removeAllItems();
+        if (accountSelector != null) {
+            accountSelector.removeAllItems();
+        }
 
+        // Fetch fresh account data from database
         List<BankAccount> accounts = accountDAO.getAccountsForCustomer(customer);
+        if (accounts == null) {
+            System.err.println("Warning: No accounts returned from database");
+            accounts = new java.util.ArrayList<>();
+        }
+        
+        // Populate table and dropdown with current balances
         for (BankAccount acc : accounts) {
             String type = acc instanceof com.rajarata.banking.domain.accounts.CheckingAccount ? "Checking" : "Savings";
             accountTableModel.addRow(new Object[]{
                 acc.getAccountNumber(),
                 type,
-                String.format("%.2f", acc.getBalance()),
+                String.format("%.2f", acc.getBalance()),  // Display current balance from DB
                 acc.getCurrency()
             });
-            if (accountSelector != null) accountSelector.addItem(acc.getAccountNumber());
+            if (accountSelector != null) {
+                accountSelector.addItem(acc.getAccountNumber());
+            }
         }
+        
+        // Also refresh stats and transaction history
+        refreshStats();
         refreshHistory();
     }
 
+    /**
+     * Refresh the statistics panel with updated account data
+     */
+    private void refreshStats() {
+        if (statsPanel == null) return;
+        
+        // Clear old stat cards
+        statsPanel.removeAll();
+        
+        // Calculate fresh statistics from database
+        List<BankAccount> accounts = accountDAO.getAccountsForCustomer(customer);
+        int totalAccounts = accounts != null ? accounts.size() : 0;
+        
+        double totalBalance = 0.0;
+        int totalTransactions = 0;
+        if (accounts != null) {
+            for (BankAccount acc : accounts) {
+                totalBalance += acc.getBalance();
+                List<Transaction> txList = transactionDAO.getTransactionsForAccount(acc.getAccountNumber());
+                if (txList != null) {
+                    totalTransactions += txList.size();
+                }
+            }
+        }
+        
+        // Add updated stat cards
+        statsPanel.add(createStatCard("Total Accounts", String.valueOf(totalAccounts), ThemeUtil.COLOR_PRIMARY));
+        statsPanel.add(createStatCard("Total Balance", String.format("LKR %.2f", totalBalance), ThemeUtil.COLOR_ACCENT));
+        statsPanel.add(createStatCard("Transactions", String.valueOf(totalTransactions), ThemeUtil.COLOR_SUCCESS));
+        
+        // Revalidate and repaint to show updated stats
+        statsPanel.revalidate();
+        statsPanel.repaint();
+    }
+
     private void refreshHistory() {
-        if (txTableModel == null) return;
+        // Safely handle null table model - return silently if not initialized
+        if (txTableModel == null) {
+            return;
+        }
+        
         txTableModel.setRowCount(0);
         List<BankAccount> accounts = accountDAO.getAccountsForCustomer(customer);
         for (BankAccount acc : accounts) {
             List<Transaction> txList = transactionDAO.getTransactionsForAccount(acc.getAccountNumber());
+            if (txList == null) continue;  // Skip if no transactions found
+            
             for (Transaction tx : txList) {
-                txTableModel.addRow(new Object[]{
-                    tx.getTimestamp().toString().replace("T", " "),
-                    acc.getAccountNumber(),
-                    tx.getType().name(),
-                    String.format("%.2f", tx.getAmount()),
-                    tx.getStatus().name()
-                });
+                if (tx != null) {  // Extra null safety check
+                    txTableModel.addRow(new Object[]{
+                        tx.getTimestamp().toString().replace("T", " "),
+                        acc.getAccountNumber(),
+                        tx.getType().name(),
+                        String.format("%.2f", tx.getAmount()),
+                        tx.getStatus().name()
+                    });
+                }
             }
         }
     }
