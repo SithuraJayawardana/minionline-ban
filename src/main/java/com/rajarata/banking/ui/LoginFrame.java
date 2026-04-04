@@ -51,15 +51,12 @@ public class LoginFrame extends JFrame {
         contentPanel.setBackground(ThemeUtil.COLOR_PRIMARY);
         contentPanel.setBorder(new EmptyBorder(40, 40, 40, 40));
 
-        // Load and display logo
-        try {
-            ImageIcon logoIcon = new ImageIcon("D:\\OOP PROJECT GIT\\minionline-ban\\Rajarata_logo.png");
-            Image logoImage = logoIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(logoImage));
+        ImageIcon logoIcon = ThemeUtil.loadLogoIcon(180, 180);
+        if (logoIcon != null) {
+            JLabel logoLabel = new JLabel(logoIcon);
             logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             contentPanel.add(logoLabel);
-        } catch (Exception e) {
-            // Logo emoji with proper font support
+        } else {
             JLabel logoPlaceholder = new JLabel("🏦");
             Font emojiFont = createEmojiSupportingFont(80);
             logoPlaceholder.setFont(emojiFont);

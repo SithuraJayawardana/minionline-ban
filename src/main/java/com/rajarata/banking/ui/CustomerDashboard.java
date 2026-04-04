@@ -93,15 +93,12 @@ public class CustomerDashboard extends JFrame {
         leftPanel.setBackground(ThemeUtil.COLOR_PRIMARY);
         leftPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         
-        // Load and display logo
-        try {
-            ImageIcon logoIcon = new ImageIcon("D:\\OOP PROJECT GIT\\minionline-ban\\Rajarata_logo.png");
-            Image logoImage = logoIcon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(logoImage));
-            leftPanel.add(logoLabel);
-        } catch (Exception e) {
+        ImageIcon logoIcon = ThemeUtil.loadLogoIcon(30, 30);
+        if (logoIcon != null) {
+            leftPanel.add(new JLabel(logoIcon));
+        } else {
             JLabel logoPlaceholder = new JLabel("🏦");
-            Font emojiFont = createEmojiSupportingFont(28);
+            Font emojiFont = createEmojiSupportingFont(24);
             logoPlaceholder.setFont(emojiFont);
             leftPanel.add(logoPlaceholder);
         }
