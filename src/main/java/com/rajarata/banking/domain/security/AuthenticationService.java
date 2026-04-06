@@ -2,14 +2,22 @@ package com.rajarata.banking.domain.security;
 
 import com.rajarata.banking.domain.users.User;
 import com.rajarata.banking.domain.exceptions.UnauthorizedAccessException;
+import com.rajarata.banking.domain.services.FraudDetectionService;
 import java.util.Base64;
 
 public class AuthenticationService {
     private AuditLogger auditLogger;
+    private FraudDetectionService fraudDetectionService; // monitors security threats
 
     public AuthenticationService() {
         // create logger to record login activities
         this.auditLogger = new AuditLogger();
+        this.fraudDetectionService = null; // optional, set via setter
+    }
+
+    // Setter to inject fraud detection service
+    public void setFraudDetectionService(FraudDetectionService fraudDetectionService) {
+        this.fraudDetectionService = fraudDetectionService;
     }
 
     public String hashPassword(String rawPassword) {
@@ -35,6 +43,11 @@ public class AuthenticationService {
             // wrong password → increase failed attempts
             int attempts = user.getFailedLoginAttempts() + 1;
             user.setFailedLoginAttempts(attempts);
+            
+            // Monitor failed login attempts for fraud
+            if (fraudDetectionService != null) {
+                fraudDetectionService.monitorLoginAttempt(user, false, attempts);
+            }
             
             if (attempts >= 3) {
                 // lock account after 3 failed tries

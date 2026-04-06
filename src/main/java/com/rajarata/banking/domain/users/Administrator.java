@@ -26,7 +26,12 @@ public class Administrator extends User {
     public void reviewFraudAlert(FraudAlert alert) {
         if (alert != null) {
             fraudAlerts.add(alert);
-            System.out.println("Administrator " + getName() + " received Fraud Alert: " + alert.getReason() + " for TxId: " + alert.getSuspiciousTransaction().getTransactionId());
+            // Handle both transaction-based and security-based alerts
+            if ("SECURITY".equals(alert.getAlertType())) {
+                System.out.println("Administrator " + getName() + " received Security Alert: " + alert.getReason() + " for UserId: " + alert.getRelatedUserId());
+            } else {
+                System.out.println("Administrator " + getName() + " received Fraud Alert: " + alert.getReason() + " for TxId: " + alert.getSuspiciousTransaction().getTransactionId());
+            }
         }
     }
 
