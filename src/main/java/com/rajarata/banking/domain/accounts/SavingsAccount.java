@@ -13,6 +13,12 @@ public class SavingsAccount extends BankAccount {
         super(accountNumber, owner, initialBalance);
     }
 
+    private double getActualMinBalance() {
+        if ("USD".equalsIgnoreCase(getCurrency())) return MIN_BALANCE / 320.0;
+        if ("EUR".equalsIgnoreCase(getCurrency())) return MIN_BALANCE / 350.0;
+        return MIN_BALANCE;
+    }
+
     @Override
     public double calculateInterest() {
         // Calculate interest based on current balance
@@ -22,14 +28,17 @@ public class SavingsAccount extends BankAccount {
     @Override
     public boolean checkWithdrawalLimit(double amount) {
         // Withdrawal must not cause the balance to drop below the minimum required balance
-        return (getBalance() - amount) >= MIN_BALANCE;
+        return (getBalance() - amount) >= getActualMinBalance();
     }
 
     @Override
     public double applyPenalty() {
         // Apply penalty if balance falls below minimum despite constraints
-        if (getBalance() < MIN_BALANCE) {
+        if (getBalance() < getActualMinBalance()) {
             double penalty = 50.0;
+            if ("USD".equalsIgnoreCase(getCurrency())) penalty = 50.0 / 320.0;
+            else if ("EUR".equalsIgnoreCase(getCurrency())) penalty = 50.0 / 350.0;
+            
             setBalance(getBalance() - penalty);
             return penalty;
         }

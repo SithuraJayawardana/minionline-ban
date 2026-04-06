@@ -1,5 +1,6 @@
 package com.rajarata.banking.domain.services;
 
+import com.rajarata.banking.db.AccountDAO;
 import com.rajarata.banking.db.TransactionDAO;
 import com.rajarata.banking.domain.accounts.BankAccount;
 import com.rajarata.banking.domain.security.AuditLogger;
@@ -18,10 +19,13 @@ public class BankingService {
     private FraudDetectionService fraudDetectionService;
     private NotificationService notificationService;
     private TransactionDAO transactionDAO;
-
-
+    private AccountDAO accountDAO;
 
     public BankingService() {}
+
+    public void setAccountDAO(AccountDAO accountDAO) {
+        this.accountDAO = accountDAO;
+    }
 
     // constructor with all services (used in real system / UI)
     public BankingService(TransactionDAO transactionDAO,
@@ -123,30 +127,31 @@ public class BankingService {
         // check both accounts
         if (fromAccount == null || toAccount == null) throw new AccountNotFoundException("One or both accounts not found.");
 
+        double amountFrom = amount;
+        
+        // Convert amount from source currency to target currency for deposit
+        double rateExchange = getConversionRate(fromAccount.getCurrency(), toAccount.getCurrency());
+        double amountTo = amountFrom * rateExchange;
+
         // create transaction IDs
-
         String txId = UUID.randomUUID().toString();
-        Transaction outTx = new Transaction(txId, TransactionType.TRANSFER, amount);
-
-        // convert currency if needed
-        double exchangeRate   = getConversionRate(fromAccount.getCurrency(), toAccount.getCurrency());
-        double convertedAmount = amount * exchangeRate;
-        Transaction inTx = new Transaction(UUID.randomUUID().toString(), TransactionType.TRANSFER, convertedAmount);
+        Transaction outTx = new Transaction(txId, TransactionType.TRANSFER, amountFrom);
+        Transaction inTx = new Transaction(UUID.randomUUID().toString(), TransactionType.TRANSFER, amountTo);
 
         try {
             // withdraw from sender and deposit to receiver
-            fromAccount.withdraw(amount);
-            toAccount.deposit(convertedAmount);
+            fromAccount.withdraw(amountFrom);
+            toAccount.deposit(amountTo);
             outTx.setStatus(TransactionStatus.SUCCESS);
             inTx.setStatus(TransactionStatus.SUCCESS);
 
             // log success
             if (auditLogger != null) {
-                auditLogger.logEvent("TRANSFER", "Transferred " + amount + " from " + fromAccount.getAccountNumber() + " to " + toAccount.getAccountNumber());
+                auditLogger.logEvent("TRANSFER", "Transferred " + amount + " " + fromAccount.getCurrency() + " from " + fromAccount.getAccountNumber() + " to " + toAccount.getAccountNumber());
             }
             // notify success
             if (notificationService != null) {
-                notificationService.notifyAll("TRANSFER_SUCCESS", "Transferred " + amount + " to " + toAccount.getAccountNumber());
+                notificationService.notifyAll("TRANSFER_SUCCESS", "Transferred " + amount + " " + fromAccount.getCurrency() + " to " + toAccount.getAccountNumber());
             }
         } catch (Exception e) {
             // mark failure
@@ -155,12 +160,12 @@ public class BankingService {
 
             // log failure
             if (auditLogger != null) {
-                auditLogger.logEvent("TRANSFER_FAILED", "Failed transfer of " + amount + " from " + fromAccount.getAccountNumber() + ": " + e.getMessage());
+                auditLogger.logEvent("TRANSFER_FAILED", "Failed transfer of " + amount + " " + fromAccount.getCurrency() + " from " + fromAccount.getAccountNumber() + ": " + e.getMessage());
             }
 
             // notify failure
             if (notificationService != null) {
-                notificationService.notifyAll("TRANSACTION_FAILED", "Failed transfer of " + amount);
+                notificationService.notifyAll("TRANSACTION_FAILED", "Failed transfer of " + amount + " " + fromAccount.getCurrency());
             }
             throw e;
         } finally {
@@ -174,6 +179,10 @@ public class BankingService {
                 toAccount.addTransaction(inTx);
                 if (transactionDAO != null) transactionDAO.saveTransaction(toAccount.getAccountNumber(), inTx);
                 if (fraudDetectionService != null) fraudDetectionService.monitorTransaction(toAccount, inTx);
+                if (accountDAO != null) {
+                    accountDAO.updateBalance(fromAccount.getAccountNumber(), fromAccount.getBalance());
+                    accountDAO.updateBalance(toAccount.getAccountNumber(), toAccount.getBalance());
+                }
             }
         }
     }

@@ -41,6 +41,9 @@ public class CustomerDashboard extends JFrame {
     private DefaultTableModel accountTableModel;
     private DefaultTableModel txTableModel;
     private JComboBox<String> accountSelector;
+    private JComboBox<String> billAccSelector;
+    private JComboBox<String> loanAccSelector;
+    private JComboBox<String> stmtAccSelector;
     private JPanel statsPanel;  // Store reference to stats panel for refreshing
 
     public CustomerDashboard(Customer customer) {
@@ -58,6 +61,7 @@ public class CustomerDashboard extends JFrame {
         );
         this.fraudDetectionService = new FraudDetectionService(null, auditLogger);
         this.bankingService = new BankingService(transactionDAO, auditLogger, fraudDetectionService, notifications);
+        this.bankingService.setAccountDAO(accountDAO);
         this.billPaymentService = new BillPaymentService();
         this.loanService = new LoanService();
         this.statementService = new StatementService();
@@ -349,7 +353,7 @@ public class CustomerDashboard extends JFrame {
         panel.add(accountSelector, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createStyledLabel("Amount (LKR):"), gbc);
+        panel.add(createStyledLabel("Amount:"), gbc);
         JTextField amountField = new JTextField(20);
         styleTextField(amountField);
         gbc.gridx = 1;
@@ -439,7 +443,8 @@ public class CustomerDashboard extends JFrame {
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         panel.add(titleLabel, gbc);
 
-        JComboBox<String> accSelector = new JComboBox<>();
+        billAccSelector = new JComboBox<>();
+        refreshAccountSelectors(billAccSelector);
         JComboBox<String> billTypeBox = new JComboBox<>(new String[]{"Electricity", "Water", "Internet"});
         JTextField amountField = new JTextField(20);
         styleTextField(amountField);
@@ -447,7 +452,7 @@ public class CustomerDashboard extends JFrame {
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1;
         panel.add(createStyledLabel("Account:"), gbc);
         gbc.gridx = 1;
-        panel.add(accSelector, gbc);
+        panel.add(billAccSelector, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2;
         panel.add(createStyledLabel("Bill Type:"), gbc);
@@ -455,7 +460,7 @@ public class CustomerDashboard extends JFrame {
         panel.add(billTypeBox, gbc);
 
         gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createStyledLabel("Amount (LKR):"), gbc);
+        panel.add(createStyledLabel("Amount:"), gbc);
         gbc.gridx = 1;
         panel.add(amountField, gbc);
 
@@ -463,7 +468,7 @@ public class CustomerDashboard extends JFrame {
         styleButton(payBtn);
         payBtn.addActionListener(e -> {
             try {
-                String accNum = (String) accSelector.getSelectedItem();
+                String accNum = (String) billAccSelector.getSelectedItem();
                 if (accNum == null) throw new IllegalArgumentException("No account selected");
                 
                 double amount = Double.parseDouble(amountField.getText().trim());
@@ -509,17 +514,17 @@ public class CustomerDashboard extends JFrame {
         panel.add(titleLabel, gbc);
 
         JComboBox<LoanType> loanTypeBox = new JComboBox<>(LoanType.values());
-        JComboBox<String> accSelector = new JComboBox<>();
+        loanAccSelector = new JComboBox<>();
         JTextField amountField = new JTextField(20);
         JTextField termField = new JTextField(20);
         styleTextField(amountField);
         styleTextField(termField);
-        refreshAccountSelectors(accSelector);
+        refreshAccountSelectors(loanAccSelector);
 
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 1;
         panel.add(createStyledLabel("Disbursement Account:"), gbc);
         gbc.gridx = 1;
-        panel.add(accSelector, gbc);
+        panel.add(loanAccSelector, gbc);
 
         gbc.gridx = 0; gbc.gridy = 2;
         panel.add(createStyledLabel("Loan Type:"), gbc);
@@ -542,7 +547,7 @@ public class CustomerDashboard extends JFrame {
             try {
                 double amount = Double.parseDouble(amountField.getText().trim());
                 int term = Integer.parseInt(termField.getText().trim());
-                String accNum = (String) accSelector.getSelectedItem();
+                String accNum = (String) loanAccSelector.getSelectedItem();
                 LoanType type = (LoanType) loanTypeBox.getSelectedItem();
 
                 if (accNum == null) throw new IllegalArgumentException("No account selected");
@@ -600,17 +605,17 @@ public class CustomerDashboard extends JFrame {
         accLabel.setForeground(ThemeUtil.COLOR_TEXT_DARK);
         controlPanel.add(accLabel);
 
-        JComboBox<String> accSelector = new JComboBox<>();
-        accSelector.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        accSelector.setBackground(ThemeUtil.COLOR_WHITE);
-        accSelector.setForeground(ThemeUtil.COLOR_TEXT_DARK);
-        accSelector.setBorder(BorderFactory.createLineBorder(ThemeUtil.COLOR_BORDER, 1));
-        accSelector.setPreferredSize(new Dimension(200, 28));
+        stmtAccSelector = new JComboBox<>();
+        stmtAccSelector.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        stmtAccSelector.setBackground(ThemeUtil.COLOR_WHITE);
+        stmtAccSelector.setForeground(ThemeUtil.COLOR_TEXT_DARK);
+        stmtAccSelector.setBorder(BorderFactory.createLineBorder(ThemeUtil.COLOR_BORDER, 1));
+        stmtAccSelector.setPreferredSize(new Dimension(200, 28));
         
         // CRITICAL FIX: Load account data into the ComboBox
-        refreshAccountSelectors(accSelector);
+        refreshAccountSelectors(stmtAccSelector);
         
-        controlPanel.add(accSelector);
+        controlPanel.add(stmtAccSelector);
 
         // Generate button with modern styling
         JButton generateBtn = new JButton("Generate Statement");
@@ -637,7 +642,7 @@ public class CustomerDashboard extends JFrame {
 
         generateBtn.addActionListener(e -> {
             try {
-                String accNum = (String) accSelector.getSelectedItem();
+                String accNum = (String) stmtAccSelector.getSelectedItem();
                 if (accNum == null || accNum.trim().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Please select an account", "No Account Selected", JOptionPane.WARNING_MESSAGE);
                     return;
@@ -715,7 +720,7 @@ public class CustomerDashboard extends JFrame {
         panel.add(accSelector, gbc);
         
         gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createStyledLabel("Amount (LKR):"), gbc);
+        panel.add(createStyledLabel("Amount:"), gbc);
         gbc.gridx = 1;
         panel.add(amountField, gbc);
         
@@ -781,7 +786,7 @@ public class CustomerDashboard extends JFrame {
         panel.add(accSelector, gbc);
         
         gbc.gridx = 0; gbc.gridy = 2;
-        panel.add(createStyledLabel("Amount (LKR):"), gbc);
+        panel.add(createStyledLabel("Amount:"), gbc);
         gbc.gridx = 1;
         panel.add(amountField, gbc);
         
@@ -854,7 +859,7 @@ public class CustomerDashboard extends JFrame {
         panel.add(toAccSelector, gbc);
         
         gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createStyledLabel("Amount (LKR):"), gbc);
+        panel.add(createStyledLabel("Amount:"), gbc);
         gbc.gridx = 1;
         panel.add(amountField, gbc);
         
@@ -871,8 +876,6 @@ public class CustomerDashboard extends JFrame {
                 BankAccount fromAccount = accountDAO.getAccountByNumber(fromAcc);
                 BankAccount toAccount = accountDAO.getAccountByNumber(toAcc);
                 bankingService.transfer(fromAccount, toAccount, amount);
-                accountDAO.updateBalance(fromAccount.getAccountNumber(), fromAccount.getBalance());
-                accountDAO.updateBalance(toAccount.getAccountNumber(), toAccount.getBalance());
                 JOptionPane.showMessageDialog(this, "✅ Transfer of LKR " + String.format("%.2f", amount) + " successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 refreshAccounts();
                 dialog.dispose();
@@ -929,7 +932,7 @@ public class CustomerDashboard extends JFrame {
         panel.add(billTypeBox, gbc);
         
         gbc.gridx = 0; gbc.gridy = 3;
-        panel.add(createStyledLabel("Amount (LKR):"), gbc);
+        panel.add(createStyledLabel("Amount:"), gbc);
         gbc.gridx = 1;
         panel.add(amountField, gbc);
         
@@ -1361,25 +1364,30 @@ public class CustomerDashboard extends JFrame {
     }
 
     private void showInterestSimulator() {
-        String selectedAccNum = (String) accountSelector.getSelectedItem();
-        if (selectedAccNum == null) {
-            JOptionPane.showMessageDialog(this, "Please select an account first.", "No Account Selected", JOptionPane.WARNING_MESSAGE);
+        JComboBox<String> simAccSelector = new JComboBox<>();
+        refreshAccountSelectors(simAccSelector);
+        
+        if (simAccSelector.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(this, "You have no accounts.", "No Accounts", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        BankAccount account = accountDAO.getAccountByNumber(selectedAccNum);
-        if (account == null) {
-            JOptionPane.showMessageDialog(this, "Account not found.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        JPanel inputPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+        JPanel inputPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+        inputPanel.add(new JLabel("Select Account:"));
+        inputPanel.add(simAccSelector);
         inputPanel.add(new JLabel("Months to simulate:"));
         JTextField monthsField = new JTextField("12");
         inputPanel.add(monthsField);
 
         int choice = JOptionPane.showConfirmDialog(this, inputPanel, "Interest Simulator", JOptionPane.OK_CANCEL_OPTION);
         if (choice != JOptionPane.OK_OPTION) return;
+
+        String selectedAccNum = (String) simAccSelector.getSelectedItem();
+        BankAccount account = accountDAO.getAccountByNumber(selectedAccNum);
+        if (account == null) {
+            JOptionPane.showMessageDialog(this, "Account not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
         try {
             int months = Integer.parseInt(monthsField.getText().trim());
@@ -1454,9 +1462,10 @@ public class CustomerDashboard extends JFrame {
     private void refreshAccounts() {
         // Clear and rebuild the account table from database
         accountTableModel.setRowCount(0);
-        if (accountSelector != null) {
-            accountSelector.removeAllItems();
-        }
+        if (accountSelector != null) accountSelector.removeAllItems();
+        if (billAccSelector != null) billAccSelector.removeAllItems();
+        if (loanAccSelector != null) loanAccSelector.removeAllItems();
+        if (stmtAccSelector != null) stmtAccSelector.removeAllItems();
 
         // Fetch fresh account data from database
         List<BankAccount> accounts = accountDAO.getAccountsForCustomer(customer);
@@ -1474,9 +1483,10 @@ public class CustomerDashboard extends JFrame {
                 String.format("%.2f", acc.getBalance()),  // Display current balance from DB
                 acc.getCurrency()
             });
-            if (accountSelector != null) {
-                accountSelector.addItem(acc.getAccountNumber());
-            }
+            if (accountSelector != null) accountSelector.addItem(acc.getAccountNumber());
+            if (billAccSelector != null) billAccSelector.addItem(acc.getAccountNumber());
+            if (loanAccSelector != null) loanAccSelector.addItem(acc.getAccountNumber());
+            if (stmtAccSelector != null) stmtAccSelector.addItem(acc.getAccountNumber());
         }
         
         // Also refresh stats and transaction history

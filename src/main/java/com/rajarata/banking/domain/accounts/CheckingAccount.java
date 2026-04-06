@@ -23,16 +23,23 @@ public class CheckingAccount extends BankAccount {
 
     @Override
     public boolean checkWithdrawalLimit(double amount) {
+        double actualLimit = overdraftLimit;
+        if ("USD".equalsIgnoreCase(getCurrency())) actualLimit = overdraftLimit / 320.0;
+        else if ("EUR".equalsIgnoreCase(getCurrency())) actualLimit = overdraftLimit / 350.0;
         // Can withdraw up to the overdraft limit (meaning balance can become negative)
-        return (getBalance() - amount) >= -overdraftLimit;
+        return (getBalance() - amount) >= -actualLimit;
     }
 
     @Override
     public double applyPenalty() {
         // Apply penalty fee if the account is currently overdrawn
         if (getBalance() < 0) {
-            setBalance(getBalance() - OVERDRAFT_FEE);
-            return OVERDRAFT_FEE;
+            double actualFee = OVERDRAFT_FEE;
+            if ("USD".equalsIgnoreCase(getCurrency())) actualFee = OVERDRAFT_FEE / 320.0;
+            else if ("EUR".equalsIgnoreCase(getCurrency())) actualFee = OVERDRAFT_FEE / 350.0;
+            
+            setBalance(getBalance() - actualFee);
+            return actualFee;
         }
         return 0.0;
     }
