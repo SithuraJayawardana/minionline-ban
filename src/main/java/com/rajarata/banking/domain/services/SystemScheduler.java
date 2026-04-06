@@ -10,24 +10,26 @@ import java.util.UUID;
 
 public class SystemScheduler {
 
+    // Process all accounts at the end of the month
     public void processEndOfMonth(List<BankAccount> allAccounts) {
         System.out.println("--- Starting End of Month Processing ---");
         for (BankAccount account : allAccounts) {
-            // Polymorphic Interest Calculation
+            // 1. Calculate interest (polymorphic, depends on account type)
             double interest = account.calculateInterest();
             if (interest > 0) {
-                account.deposit(interest);
+                account.deposit(interest);// credit interest
+
                 Transaction tx = new Transaction(UUID.randomUUID().toString(), TransactionType.INTEREST_CREDIT, interest);
                 tx.setStatus(TransactionStatus.SUCCESS);
-                account.addTransaction(tx);
+                account.addTransaction(tx);// record transaction
                 System.out.println("Credited " + interest + " " + account.getCurrency() + " to account " + account.getAccountNumber());
             }
 
-            // Polymorphic Penalty Application
+            // 2. Apply penalty if applicable (polymorphic)
             double penalty = account.applyPenalty();
             if (penalty > 0) {
-                // penalty is already applied inside the method via protected setBalance
-                // but we need to record it
+                // penalty already deducted inside applyPenalty()
+                // record penalty transaction
                 Transaction tx = new Transaction(UUID.randomUUID().toString(), TransactionType.FEE_DEDUCTION, penalty);
                 tx.setStatus(TransactionStatus.SUCCESS);
                 account.addTransaction(tx);

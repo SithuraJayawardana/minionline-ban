@@ -1,7 +1,7 @@
 package com.rajarata.banking.domain.transactions;
 
 /**
- * Enum representing the various types of banking transactions.
+ * Represents different types of banking transactions.
  */
 public enum TransactionType {
     DEPOSIT,

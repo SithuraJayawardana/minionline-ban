@@ -1,10 +1,10 @@
 package com.rajarata.banking.domain.transactions;
 
 /**
- * Enum representing the status of a banking transaction.
+* Represents the current status of a banking transaction.
  */
 public enum TransactionStatus {
-    PENDING,
-    SUCCESS,
-    FAILED
+    PENDING,// Transaction created but not yet processed
+    SUCCESS,// Transaction completed successfully
+    FAILED// Transaction failed
 }
