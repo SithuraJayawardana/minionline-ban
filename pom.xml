@@ -43,6 +43,44 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.5.2</version>
+                <executions>
+                    <execution>
+                        <id>l4j-clui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
+                            <outfile>${project.build.directory}/rajarata-online-bank.exe</outfile>
+                            <classPath>
+                                <mainClass>com.rajarata.banking.ui.MainRunner</mainClass>
+                                <preCp>anything</preCp>
+                            </classPath>
+                            <jre>
+                                <minVersion>11</minVersion>
+                            </jre>
+                            <versionInfo>
+                                <fileVersion>1.0.0.0</fileVersion>
+                                <txtFileVersion>1.0.0.0</txtFileVersion>
+                                <fileDescription>Rajarata Digital Banking</fileDescription>
+                                <copyright>2024 Rajarata Banking</copyright>
+                                <productVersion>1.0.0.0</productVersion>
+                                <txtProductVersion>1.0.0.0</txtProductVersion>
+                                <productName>Rajarata Digital Banking</productName>
+                                <companyName>Rajarata University</companyName>
+                                <internalName>rajarata-banking</internalName>
+                                <originalFilename>rajarata-banking.exe</originalFilename>
+                            </versionInfo>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
