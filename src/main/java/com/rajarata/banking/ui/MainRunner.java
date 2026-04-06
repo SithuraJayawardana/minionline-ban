@@ -44,5 +44,3 @@ public class MainRunner {
         });
     }
 }
-// Note: The above code ensures that the database is initialized and populated with default records only if they don't already exist, preventing duplicate entries on subsequent runs.
-
