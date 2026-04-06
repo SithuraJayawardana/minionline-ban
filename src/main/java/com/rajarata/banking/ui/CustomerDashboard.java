@@ -305,7 +305,7 @@ public class CustomerDashboard extends JFrame {
         styleModernTable(table);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 10));
         buttonPanel.setBackground(ThemeUtil.COLOR_BACKGROUND);
 
         JButton newAccountBtn = new JButton("➕ Open Account");
@@ -697,7 +697,6 @@ public class CustomerDashboard extends JFrame {
         gbc.weightx = 1.0;
         
         JLabel titleLabel = new JLabel("💰 Make a Deposit");
-        // Fix emoji display
         Font emojiFont = createEmojiSupportingFont(18);
         titleLabel.setFont(new Font(emojiFont.getName(), Font.BOLD, 18));
         titleLabel.setForeground(ThemeUtil.COLOR_PRIMARY);
