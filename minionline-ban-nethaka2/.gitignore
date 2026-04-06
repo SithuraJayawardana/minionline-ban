@@ -1,0 +1,17 @@
+# Compiled output
+target/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# SQLite database (runtime generated)
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Maven
+dependency-reduced-pom.xml

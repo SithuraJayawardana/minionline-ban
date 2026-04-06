@@ -51,15 +51,12 @@ public class LoginFrame extends JFrame {
         contentPanel.setBackground(ThemeUtil.COLOR_PRIMARY);
         contentPanel.setBorder(new EmptyBorder(40, 40, 40, 40));
 
-        // Load and display logo
-        try {
-            ImageIcon logoIcon = new ImageIcon("D:\\OOP PROJECT GIT\\minionline-ban\\Rajarata_logo.png");
-            Image logoImage = logoIcon.getImage().getScaledInstance(180, 180, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(logoImage));
+        ImageIcon logoIcon = ThemeUtil.loadLogoIcon(180, 180);
+        if (logoIcon != null) {
+            JLabel logoLabel = new JLabel(logoIcon);
             logoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             contentPanel.add(logoLabel);
-        } catch (Exception e) {
-            // Logo emoji with proper font support
+        } else {
             JLabel logoPlaceholder = new JLabel("🏦");
             Font emojiFont = createEmojiSupportingFont(80);
             logoPlaceholder.setFont(emojiFont);
@@ -318,7 +315,15 @@ public class LoginFrame extends JFrame {
             return;
         }
         
-        if (userDAO.isLocked(email)) {
+        User user = userDAO.getUserByEmail(email);
+        if (user == null) {
+            JOptionPane.showMessageDialog(this, 
+                "Invalid credentials. Account not found.", 
+                "Login Failed", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (user.isLocked()) {
             JOptionPane.showMessageDialog(this, 
                 "Account locked due to multiple failed login attempts.\nPlease contact an administrator.", 
                 "Account Locked", JOptionPane.ERROR_MESSAGE);
@@ -327,9 +332,7 @@ public class LoginFrame extends JFrame {
 
         // Simple hash check
         String hashed = java.util.Base64.getEncoder().encodeToString(pwd.getBytes());
-        User user = userDAO.authenticate(email, hashed);
-
-        if (user != null) {
+        if (hashed.equals(user.getPasswordHash())) {
             userDAO.resetFailedAttempts(email);
             // Route user to appropriate dashboard
             if (user instanceof Administrator) {
@@ -388,5 +391,39 @@ public class LoginFrame extends JFrame {
         
         // Fallback if none found
         return new Font("Dialog", Font.PLAIN, size);
+    }
+
+    public static void main(String[] args) {
+        // 1. Establish SQLite DB and tables
+        com.rajarata.banking.db.DatabaseManager.initializeDatabase();
+        
+        // 2. Safely populate default records if none exist
+        UserDAO userDAO = new UserDAO();
+        if (userDAO.getAllUsers().isEmpty()) {
+            System.out.println("Initializing default dataset...");
+            
+            com.rajarata.banking.domain.users.Administrator admin = new com.rajarata.banking.domain.users.Administrator("A1", "Super Admin", "admin@bank.com", "011", "SA", "IT");
+            admin.setPasswordHash(java.util.Base64.getEncoder().encodeToString("admin123".getBytes()));
+            userDAO.addUser(admin, "ADMIN");
+
+            com.rajarata.banking.domain.users.Customer cust = new com.rajarata.banking.domain.users.Customer("C1", "Jane Doe", "jane@bank.com", "077", "Colombo", java.time.LocalDate.of(1995, 1, 1));
+            cust.setPasswordHash(java.util.Base64.getEncoder().encodeToString("cust123".getBytes()));
+            userDAO.addUser(cust, "CUSTOMER");
+            
+            // 2.5 Populate Default Accounts
+            com.rajarata.banking.db.AccountDAO accountDAO = new com.rajarata.banking.db.AccountDAO();
+            com.rajarata.banking.domain.accounts.CheckingAccount checkAcc = new com.rajarata.banking.domain.accounts.CheckingAccount("CHK-1001", cust, 5000.0, 5000.0);
+            com.rajarata.banking.domain.accounts.SavingsAccount saveAcc = new com.rajarata.banking.domain.accounts.SavingsAccount("SAV-2001", cust, 15000.0);
+            accountDAO.createAccount(checkAcc);
+            accountDAO.createAccount(saveAcc);
+
+            System.out.println("✅ System initialized successfully.");
+        }
+
+        // 3. Launch UI
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            ThemeUtil.applyTheme();
+            new LoginFrame(userDAO).setVisible(true);
+        });
     }
 }

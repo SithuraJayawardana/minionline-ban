@@ -13,7 +13,7 @@ public class MainRunner {
     public static void main(String[] args) {
         // 1. Establish SQLite DB and tables
         DatabaseManager.initializeDatabase();
-        
+        // Note: DatabaseManager will create tables if they don't exist, so we can safely call it every time.
         // 2. Safely populate default records if none exist
         UserDAO userDAO = new UserDAO();
         if (userDAO.getAllUsers().isEmpty()) {

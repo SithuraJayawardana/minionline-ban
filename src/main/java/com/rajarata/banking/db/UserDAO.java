@@ -67,6 +67,38 @@ public class UserDAO {
         return null;
     }
 
+    public User getUserByEmail(String email) {
+        String query = "SELECT * FROM users WHERE email = ?";
+        try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, email);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String role = rs.getString("role");
+                    String id = rs.getString("user_id");
+                    String name = rs.getString("name");
+                    String pEmail = rs.getString("email");
+                    String phone = rs.getString("phone_number");
+
+                    User u;
+                    if (role.equalsIgnoreCase("ADMIN")) {
+                        u = new Administrator(id, name, pEmail, phone, "SystemAdmin", "IT");
+                    } else if (role.equalsIgnoreCase("STAFF")) {
+                        u = new BankStaff(id, name, pEmail, phone, "E" + id, "BR1");
+                    } else {
+                        u = new Customer(id, name, pEmail, phone, "Sample Address", java.time.LocalDate.now());
+                    }
+                    u.setPasswordHash(rs.getString("password_hash"));
+                    u.setLocked(rs.getBoolean("is_locked"));
+                    u.setFailedLoginAttempts(rs.getInt("failed_attempts"));
+                    return u;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error fetching user by email: " + e.getMessage());
+        }
+        return null;
+    }
+
     public void incrementFailedAttempts(String email) {
         String query = "UPDATE users SET failed_attempts = failed_attempts + 1 WHERE email = ?";
         try (Connection conn = DatabaseManager.getConnection(); PreparedStatement pstmt = conn.prepareStatement(query)) {

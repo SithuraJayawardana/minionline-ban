@@ -4,7 +4,8 @@ import com.rajarata.banking.domain.loans.Loan;
 import com.rajarata.banking.domain.loans.LoanType;
 
 public class LoanService {
-    
+
+    // Returns interest rate based on loan type
     public double getInterestRate(LoanType type) {
         switch (type) {
             case PERSONAL: return 0.12; // 12%
@@ -15,15 +16,19 @@ public class LoanService {
         }
     }
 
+    // Apply for a new loan and save it
     public Loan applyForLoan(com.rajarata.banking.domain.users.Customer borrower, double amount, int termInMonths, LoanType type) {
         Loan loan = new Loan(borrower, amount, termInMonths, type);
         loan.setInterestRate(getInterestRate(type));
+
+        // save loan in file storage
         com.rajarata.banking.db.FileStorageUtil.saveLoan(loan.getLoanId(), borrower.getUserId(), amount, termInMonths, type.name());
         return loan;
     }
 
     /**
-     * Standard amortization formula: M = P [ r(1 + r)^n ] / [ (1 + r)^n - 1]
+     * Calculate monthly repayment using standard amortization formula
+     * M = P [ r(1 + r)^n ] / [ (1 + r)^n - 1]
      */
     public double calculateMonthlyRepayment(Loan loan) {
         double principal = loan.getPrincipalAmount();
@@ -31,19 +36,22 @@ public class LoanService {
         int numPayments = loan.getTermInMonths();
         
         if (monthlyInterestRate == 0) {
-            return principal / numPayments;
+            return principal / numPayments;// zero interest loan
+
         }
 
         double compoundFactor = Math.pow(1.0 + monthlyInterestRate, numPayments);
         return (principal * monthlyInterestRate * compoundFactor) / (compoundFactor - 1.0);
     }
 
+    // Apply late penalty to the remaining balance
     public void applyLatePenalty(Loan loan) {
         // Flat rate 500 LKR late penalty or 2% of remaining balance
         double penalty = 500.0;
         loan.setRemainingBalance(loan.getRemainingBalance() + penalty);
     }
 
+     // Retrieve all loans for a given customer
     public java.util.List<Loan> getLoansForCustomer(com.rajarata.banking.domain.users.Customer customer) {
         java.util.List<Loan> customerLoans = new java.util.ArrayList<>();
         java.util.List<String> allLoansLines = com.rajarata.banking.db.FileStorageUtil.readAllLoans();

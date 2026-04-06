@@ -3,6 +3,7 @@ package com.rajarata.banking.ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.net.URL;
 
 public class ThemeUtil {
     // Modern Professional Theme - Clean, Premium, Professional
@@ -115,4 +116,21 @@ public class ThemeUtil {
         UIManager.put("ComboBox.background",        Color.WHITE);
         UIManager.put("ComboBox.foreground",        COLOR_TEXT_DARK);
     }
-}
+    public static final String LOGO_FILE_NAME = "Rajarata_logo.png";
+
+    public static ImageIcon loadLogoIcon(int width, int height) {
+        try {
+            URL resourceUrl = ThemeUtil.class.getResource("/" + LOGO_FILE_NAME);
+            if (resourceUrl != null) {
+                ImageIcon icon = new ImageIcon(resourceUrl);
+                Image image = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                return new ImageIcon(image);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    public static Font createEmojiSupportingFont(int size) {
+        return new Font("Segoe UI Emoji", Font.PLAIN, size);
+    }}

@@ -1,28 +1,57 @@
 package com.rajarata.banking.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+
 import com.rajarata.banking.db.AccountDAO;
 import com.rajarata.banking.db.TransactionDAO;
 import com.rajarata.banking.domain.accounts.BankAccount;
+import com.rajarata.banking.domain.loans.Loan;
+import com.rajarata.banking.domain.loans.LoanType;
 import com.rajarata.banking.domain.notifications.NotificationService;
 import com.rajarata.banking.domain.security.AuditLogger;
 import com.rajarata.banking.domain.services.BankingService;
 import com.rajarata.banking.domain.services.BillPaymentService;
+import com.rajarata.banking.domain.services.FraudDetectionService;
 import com.rajarata.banking.domain.services.LoanService;
 import com.rajarata.banking.domain.services.StatementService;
-import com.rajarata.banking.domain.services.FraudDetectionService;
-import com.rajarata.banking.domain.services.InterestSimulationEngine;
 import com.rajarata.banking.domain.transactions.Transaction;
 import com.rajarata.banking.domain.users.Customer;
-import com.rajarata.banking.domain.loans.Loan;
-import com.rajarata.banking.domain.loans.LoanType;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.awt.RenderingHints;
-import java.util.List;
 
 /**
  * Modern customer dashboard with professional design.
@@ -94,15 +123,12 @@ public class CustomerDashboard extends JFrame {
         leftPanel.setBackground(ThemeUtil.COLOR_PRIMARY);
         leftPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         
-        // Load and display logo
-        try {
-            ImageIcon logoIcon = new ImageIcon("D:\\OOP PROJECT GIT\\minionline-ban\\Rajarata_logo.png");
-            Image logoImage = logoIcon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(logoImage));
-            leftPanel.add(logoLabel);
-        } catch (Exception e) {
+        ImageIcon logoIcon = ThemeUtil.loadLogoIcon(30, 30);
+        if (logoIcon != null) {
+            leftPanel.add(new JLabel(logoIcon));
+        } else {
             JLabel logoPlaceholder = new JLabel("🏦");
-            Font emojiFont = createEmojiSupportingFont(28);
+            Font emojiFont = createEmojiSupportingFont(24);
             logoPlaceholder.setFont(emojiFont);
             leftPanel.add(logoPlaceholder);
         }
@@ -114,7 +140,7 @@ public class CustomerDashboard extends JFrame {
 
         // Center: Welcome message with proper alignment
         JLabel welcomeLabel = new JLabel("Welcome, " + customer.getName());
-        welcomeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 16));
         welcomeLabel.setForeground(ThemeUtil.COLOR_WHITE);
         welcomeLabel.setHorizontalAlignment(SwingConstants.CENTER);
         JPanel centerPanel = new JPanel(new BorderLayout());
@@ -688,8 +714,11 @@ public class CustomerDashboard extends JFrame {
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(ThemeUtil.COLOR_BACKGROUND);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            new EmptyBorder(20, 20, 20, 20)
+        ));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -754,8 +783,11 @@ public class CustomerDashboard extends JFrame {
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(ThemeUtil.COLOR_BACKGROUND);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            new EmptyBorder(20, 20, 20, 20)
+        ));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -820,8 +852,11 @@ public class CustomerDashboard extends JFrame {
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(ThemeUtil.COLOR_BACKGROUND);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            new EmptyBorder(20, 20, 20, 20)
+        ));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -896,8 +931,11 @@ public class CustomerDashboard extends JFrame {
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(ThemeUtil.COLOR_BACKGROUND);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1),
+            new EmptyBorder(20, 20, 20, 20)
+        ));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -1049,22 +1087,22 @@ public class CustomerDashboard extends JFrame {
                 
                 // Card background with rounded corners (clean design)
                 if (hovered) {
-                    g2.setColor(new Color(250, 248, 245)); // Light cream on hover
+                    g2.setColor(new Color(240, 245, 255)); // Light blue on hover
                 } else {
                     g2.setColor(ThemeUtil.COLOR_WHITE); // White background
                 }
                 g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
                 
-                // Subtle shadow effect
-                g2.setColor(new Color(0, 0, 0, 8));
-                g2.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 10, 10);
+                // Enhanced shadow effect for more depth
+                g2.setColor(new Color(0, 0, 0, 20));
+                g2.fillRoundRect(2, 2, getWidth() - 5, getHeight() - 5, 10, 10);
                 
-                // Left border accent (clean, minimal)
+                // Left border accent (thicker and more vibrant)
                 g2.setColor(ThemeUtil.COLOR_ACCENT);
-                g2.fillRect(0, 0, 3, getHeight());
+                g2.fillRect(0, 0, 5, getHeight());
                 
-                // Light border
-                g2.setColor(new Color(200, 200, 200));
+                // Optional: Add a subtle light gray border for better definition
+                g2.setColor(new Color(220, 220, 220));
                 g2.setStroke(new java.awt.BasicStroke(1));
                 g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
                 
@@ -1093,7 +1131,7 @@ public class CustomerDashboard extends JFrame {
 
         // Icon - medium sized, centered
         JLabel iconLabel = new JLabel(icon);
-        Font emojiFont = createEmojiSupportingFont(36);
+        Font emojiFont = createEmojiSupportingFont(24); // Smaller icon size
         iconLabel.setFont(emojiFont);
         iconLabel.setMinimumSize(new Dimension(50, 50));
         iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -1543,5 +1581,42 @@ public class CustomerDashboard extends JFrame {
                 }
             }
         }
+    }
+
+    public static void main(String[] args) {
+        // 1. Establish SQLite DB and tables
+        com.rajarata.banking.db.DatabaseManager.initializeDatabase();
+        
+        // 2. Safely populate default records if none exist
+        com.rajarata.banking.db.UserDAO userDAO = new com.rajarata.banking.db.UserDAO();
+        if (userDAO.getAllUsers().isEmpty()) {
+            System.out.println("Initializing default dataset...");
+            
+            com.rajarata.banking.domain.users.Administrator admin = new com.rajarata.banking.domain.users.Administrator("A1", "Super Admin", "admin@bank.com", "011", "SA", "IT");
+            admin.setPasswordHash(java.util.Base64.getEncoder().encodeToString("admin123".getBytes()));
+            userDAO.addUser(admin, "ADMIN");
+
+            com.rajarata.banking.domain.users.Customer cust = new com.rajarata.banking.domain.users.Customer("C1", "Jane Doe", "jane@bank.com", "077", "Colombo", java.time.LocalDate.of(1995, 1, 1));
+            cust.setPasswordHash(java.util.Base64.getEncoder().encodeToString("cust123".getBytes()));
+            userDAO.addUser(cust, "CUSTOMER");
+            
+            // 2.5 Populate Default Accounts
+            com.rajarata.banking.db.AccountDAO accountDAO = new com.rajarata.banking.db.AccountDAO();
+            com.rajarata.banking.domain.accounts.CheckingAccount checkAcc = new com.rajarata.banking.domain.accounts.CheckingAccount("CHK-1001", cust, 5000.0, 5000.0);
+            com.rajarata.banking.domain.accounts.SavingsAccount saveAcc = new com.rajarata.banking.domain.accounts.SavingsAccount("SAV-2001", cust, 15000.0);
+            accountDAO.createAccount(checkAcc);
+            accountDAO.createAccount(saveAcc);
+
+            System.out.println("✅ System initialized successfully.");
+        }
+
+        // Get the default customer
+        com.rajarata.banking.domain.users.Customer customer = (com.rajarata.banking.domain.users.Customer) userDAO.getUserById("C1");
+
+        // 3. Launch UI
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            ThemeUtil.applyTheme();
+            new CustomerDashboard(customer).setVisible(true);
+        });
     }
 }

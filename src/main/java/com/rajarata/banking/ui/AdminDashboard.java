@@ -71,14 +71,10 @@ public class AdminDashboard extends JFrame {
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
         leftPanel.setBackground(ThemeUtil.COLOR_PRIMARY);
         
-        // Load and display logo
-        try {
-            ImageIcon logoIcon = new ImageIcon("D:\\OOP PROJECT GIT\\minionline-ban\\Rajarata_logo.png");
-            Image logoImage = logoIcon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
-            JLabel logoLabel = new JLabel(new ImageIcon(logoImage));
-            leftPanel.add(logoLabel);
-        } catch (Exception e) {
-            // Fix emoji display for logo
+        ImageIcon logoIcon = ThemeUtil.loadLogoIcon(45, 45);
+        if (logoIcon != null) {
+            leftPanel.add(new JLabel(logoIcon));
+        } else {
             JLabel logoPlaceholder = new JLabel("🏦");
             Font emojiFont = createEmojiSupportingFont(28);
             logoPlaceholder.setFont(emojiFont);
