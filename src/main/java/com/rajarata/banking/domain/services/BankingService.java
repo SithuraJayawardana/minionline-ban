@@ -10,7 +10,7 @@ import com.rajarata.banking.domain.transactions.TransactionType;
 import com.rajarata.banking.domain.exceptions.AccountNotFoundException;
 
 import java.util.UUID;
-// Handles main banking operations like deposit, withdraw, and transfer
+
 
 public class BankingService {
 
@@ -19,7 +19,7 @@ public class BankingService {
     private NotificationService notificationService;
     private TransactionDAO transactionDAO;
 
-    // simple constructor (no extra services)
+
 
     public BankingService() {}
 
