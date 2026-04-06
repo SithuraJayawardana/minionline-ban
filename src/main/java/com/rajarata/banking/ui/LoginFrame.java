@@ -203,9 +203,10 @@ public class LoginFrame extends JFrame {
         
         cardPanel.add(Box.createVerticalStrut(12));
 
-        // Demo credentials hint
-        JLabel hintLabel = new JLabel("<html><span style='font-size:11px; color:#888;'>Demo: admin@rajarata.com / password: password</span></html>");
+        // Placeholder for demo hint (keeps spacing consistent)
+        JLabel hintLabel = new JLabel(" ");
         hintLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        hintLabel.setPreferredSize(new Dimension(350, 16));
         cardPanel.add(hintLabel);
         
         cardPanel.add(Box.createVerticalStrut(18));
