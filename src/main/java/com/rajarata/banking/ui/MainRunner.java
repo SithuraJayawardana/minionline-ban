@@ -45,5 +45,5 @@ public class MainRunner {
     }
 }
 //this class serves as the entry point for the banking application. It initializes the database, populates default records if necessary, and launches the login UI.
-//test
+//
 // To run this application, ensure you have the necessary dependencies (like SQLite JDBC driver) in your project. When you execute the MainRunner class, it will check if the database is initialized and if there are any users. If not, it will create a default administrator and customer account, along with their respective accounts. Finally, it will launch the login interface for user interaction.
